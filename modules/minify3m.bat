@@ -1,0 +1,1 @@
+call uglifyjs --warn three.module.js -m -c -o three.module.min.js

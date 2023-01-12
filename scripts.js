@@ -1,5 +1,5 @@
 /*** scripts.js - Main LEO View / JoEmbedded ***/
-import * as THREE from './modules/three.module.js'; 
+import * as THREE from './modules/three.module.min.js'; 
 import {
 	OrbitControls
 } from './modules/OrbitControls.js';
@@ -16,6 +16,8 @@ import {
   renderer,
   gui,
   guiTerminal,
+  guiTerminalShow,
+  guiTerminalClear,
   cartesian2Polar,
 } from './t3helpers.js';
 
@@ -34,17 +36,17 @@ scene.background = new THREE.CubeTextureLoader().load(Array(6).fill(backgroundIm
 
 // ---The Options --------
 const options = {
-  test: 3.14,
+  halloText: "Hallo Welt"
 };
-const guiOptionsFolder = gui.addFolder('Options')
-guiOptionsFolder.add(options, 'test', 0, 5);
+gui.add(options,'halloText').name("GibMirTiernamen!")
 
-gui.add(new function () {
-  this.sayhi = () => {
-    cameraHome();
-        console.log("Hallo")
-  }
-}, 'sayhi').name("[PushThisButton]");
+/*** 
+ guiOptions.add(new function () {
+  this.clrTerm = () => {
+        guiTerminalClear()
+        }
+}, 'clrTerm').name("[Clear Terminal]");
+****/
 
 
 const EARTH_RADIUS_KM = 6371; // km (== 1 UNIT)
@@ -129,10 +131,74 @@ scene.add(haloobj);
 window.addEventListener("keydown", (event) => {
   switch (event.key) {
     default:
-      guiTerminal("Key: " + event.code)
+      guiTerminal("Key: " + event.code )
       break
   }
 })
+
+// Linien-Test
+
+function box( width, height, depth ) {
+				width = width * 0.5,
+				height = height * 0.5,
+				depth = depth * 0.5;
+				const geometry = new THREE.BufferGeometry();
+				const position = [];
+				position.push(
+					- width, - height, - depth,
+					- width, height, - depth,
+					- width, height, - depth,
+					width, height, - depth,
+					width, height, - depth,
+					width, - height, - depth,
+					width, - height, - depth,
+					- width, - height, - depth,
+					- width, - height, depth,
+					- width, height, depth,
+					- width, height, depth,
+					width, height, depth,
+					width, height, depth,
+					width, - height, depth,
+					width, - height, depth,
+					- width, - height, depth,
+					- width, - height, - depth,
+					- width, - height, depth,
+					- width, height, - depth,
+					- width, height, depth,
+					width, height, - depth,
+					width, height, depth,
+					width, - height, - depth,
+					width, - height, depth
+				 );
+				geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position, 3 ) );
+				return geometry;
+			}
+
+// LineSegments: Sammlung von Linien
+// THREE.Line : 1 lange Linie
+
+const geometryBox = box( 3, 3, 3 );
+// scale wohl verwendbar fuer Dashed Material
+const lineSegments = new THREE.LineSegments( geometryBox, new THREE.LineDashedMaterial( { scale: 1, color: 0xffaa00, dashSize: 0.1, gapSize: 0.1 } ) );
+lineSegments.computeLineDistances(); // noetig 
+scene.add( lineSegments );
+
+
+const lineMaterial = new THREE.LineBasicMaterial({color: 'red', opacity: 0.8, transparent: true}); // Transparent fkt.
+let points = [];
+for(let i=0;i<2; i+=0.01){
+points.push(new THREE.Vector3(1, 1+i, 0));
+points.push(new THREE.Vector3(1, 0, 2));
+points.push(new THREE.Vector3(-1.1-i, 2, 1));
+}
+
+
+const geometry = new THREE.BufferGeometry().setFromPoints(points);
+var Curve = new THREE.Line(geometry, lineMaterial);
+scene.add(Curve);
+
+
+
 
 
 // MausZeugs

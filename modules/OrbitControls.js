@@ -6,7 +6,7 @@ import {
 	TOUCH,
 	Vector2,
 	Vector3
-} from './three.module.js'; // Achtung: Link geaendert JW
+} from './three.module.min.js'; // Achtung: Link geaendert JW
 
 // This set of controls performs orbiting, dollying (zooming), and panning.
 // Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).

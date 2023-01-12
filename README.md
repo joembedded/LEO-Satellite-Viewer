@@ -1,4 +1,4 @@
-# Leoview - View LEO Satellites
+# LEO View - View LEO Satellites
 
 JoEmbedded 
 

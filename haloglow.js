@@ -5,7 +5,7 @@
     Color,
     Mesh,
     ShaderMaterial
-  } from './modules/three.module.js'; 
+  } from './modules/three.module.min.js'; 
 
   const THREE = window.THREE
   ? window.THREE // Prefer consumption from global THREE, if exists
