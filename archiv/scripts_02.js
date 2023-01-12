@@ -98,7 +98,8 @@ var opt = {
   opa: 0.5
 }
 
-const lineMaterialRed = new THREE.LineBasicMaterial({color: 'red',transparent: true, opacity: 0.8 }); 
+const lineMaterialRed = new THREE.LineBasicMaterial({color: 'red',transparent: true, opacity: 0.5 }); 
+const lineMaterialGreen = new THREE.LineBasicMaterial({color: 'green' }); 
 const ANZSEG = 30 // Anzahl Segments Standardkreis
 function circleInit(){
   let rstep = Math.PI*2 / ANZSEG
@@ -124,11 +125,10 @@ function earthCircle(hrad, hdisp, hlinemat = lineMaterialRed){
 
 const circleBeam = new THREE.Object3D();
 
-const circle = earthCircle(0.1, opt.kdist+ opt.kdistf,new THREE.LineBasicMaterial({color: 'green' })); 
-
+const circle = earthCircle(0.1, opt.kdist+ opt.kdistf,lineMaterialGreen)
 circleBeam.add(circle);
 
-for(let i=1.0;i<2;i+=0.05) circleBeam.add(earthCircle(i/8,i));
+for(let i=1.0;i<3;i+=0.01) circleBeam.add(earthCircle(i/8,i));
 
 
 circleBeam.scale.x=opt.krad
