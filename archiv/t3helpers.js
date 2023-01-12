@@ -15,7 +15,7 @@ export const camera = new THREE.PerspectiveCamera(
   45, // Angle FieldOfView
   window.innerWidth / window.innerHeight, // Ratio
   0.1, // MinRender
-  1000 // MaxDist
+  100 // MaxDist
 );
 export const orbit = new OrbitControls(camera, renderer.domElement); // Mouse CameraMove
 export const gridHelper = new THREE.GridHelper(10, 10);
@@ -58,10 +58,10 @@ export function initJot3(useGH = true, useAH = true) {
 
 // Auto-Add  guiTerminal(txt) (very simple: overflow right, noscrollbars)
 // A Terminal
-var MAXTERM = 40 // Lines for Terminal
-var terminalContent = []
-var guix // internal
-var termDom = undefined
+let MAXTERM = 40 // Lines for Terminal
+let terminalContent = []
+let guix // internal
+let termDom = undefined
 const termOpt = {
   showTerminal: true
 }
@@ -69,7 +69,7 @@ const termOpt = {
 function initTerminal() {
   guix = document.createElement("div");
   guix.innerHTML = "<div id='id_guijot'></div>";
-  guix.style = "background-color: #1a1a1a; border: 1px solid #303030; padding: 5px"
+  guix.style = "background-color: #1a1a1a; border: 1px solid #303030"
   gui.domElement.appendChild(guix);
   termDom = document.getElementById('id_guijot')
   termDom.innerText = "(Terminal...)"
