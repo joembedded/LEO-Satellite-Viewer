@@ -58,7 +58,7 @@ export function initJot3(useGH = true, useAH = true) {
 
 // Auto-Add  guiTerminal(txt) (very simple: overflow right, noscrollbars)
 // A Terminal
-var MAXTERM = 40 // Lines for Terminal
+var MAXTERM = 100 // Lines for Terminal
 var terminalContent = []
 var guix // internal
 var termDom = undefined

@@ -21,6 +21,8 @@ import {
   cartesian2Polar,
 } from './t3helpers.js';
 
+import * as TLE from './tleloader.js'
+
 //--- Images ---
 const backgroundImage = './img/night-sky.jpg';
 const globeImg = './img/earth-jo.jpg'; // Earth
@@ -77,18 +79,63 @@ orbit.addEventListener("change", () => {
 });
 }
 
+/* Select and Show */
+function selectSats(){
+  const anz = TLE.buildSelectedSatList(appopt.searchmask)
+  guiTerminal(anz + " Satllites match '"+appopt.searchmask+"'");   
+  for(let i=0;i<anz;i++){
+    if(i<40) guiTerminal(i + ": '"+TLE.SelSatList[i].name+"'")
+    else {
+      guiTerminal("And "+anz-i + " more...")
+      break
+    }
+  }
+}
+
+//--- App Options ---
+const appopt = {
+  searchmask: 'astrocast',
+}
+
+var appdatagui;
+// Load LEO Data
+async function tleSetup(){
+  await TLE.loadTLEList()
+  guiTerminal("Loaded "+ TLE.SatList.length +" LEO Satellites")
+  selectSats(false);
+  appdatagui.onChange(()=>{
+    // console.log(appopt.searchmask)
+    guiTerminalClear();
+    selectSats();
+  })  
+}
+
 //==================== MAIN ====================
 initJot3(); // Init Jo 3D Framwwork orbitcontrol, camera, scene
-guiTerminal("\u2b50 LEO Satellite Viewer")
-guiTerminal("\u2b50  V0.1 - JoEmbedded.de")
+
+const appoptions = gui.addFolder("App Options");
+appoptions.open();
+appdatagui = appoptions.add(appopt,'searchmask').name("Searchmask")
+
+guiTerminal("\u2b50 LEO Satellite Viewer \u2b50")
+guiTerminal("JoEmbedded.de / V0.1")
+guiTerminal("");
 
 // Background - 6 ident. Sides Box
 scene.background = new THREE.CubeTextureLoader().load(Array(6).fill(backgroundImage)); 
 
 genEarth(); // R=1
 
-monitorView();
+monitorView(); // Mouse Handler
 
+
+guiTerminal("Load LEO Satellite Data...")
+tleSetup();
+
+
+
+
+/*
 var opt = {
   krad: 1,
   kdist: 1 ,  // Grob
@@ -112,6 +159,7 @@ function circleInit(){
 
 const circleGeometry = circleInit()
 
+// A circle on he ground or above Earth
 function earthCircle(hrad, hdisp, hlinemat = lineMaterialRed){
   const hcircle = new THREE.Object3D();
   const hcirclegeo = new THREE.Line(circleGeometry, hlinemat)
@@ -158,12 +206,12 @@ gui.add(opt,'krotx',-1,1, 0.05).onChange(()=>{
 //    guiTerminal("Rx: "+opt.krotx)
 lineMaterialRed.opacity = opt.opa
 })
-    
+*/
 
 
 // ---Animate all---
 function animate() {
-  circleBeam.rotation.x+=0.01
+  //circleBeam.rotation.x+=0.01
   renderer.render(scene, camera);
 }
 renderer.setAnimationLoop(animate);
