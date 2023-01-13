@@ -1,8 +1,12 @@
 /* TLELOADER.JS / JoEmbedded */
 // Info about TLE: https://en.wikipedia.org/wiki/Two-line_element_set
-// Original Source: https: celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
+// Original Source: https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
+
+// Cache download to ./data: via (e.g. by CRON) TLE-Data are valid for at least several days
+// curl -o tledata.txt "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
 import * as SAT from "./modules/satellite.min.js"
+import { StaticCopyUsage } from "./modules/three.module.min.js"
 
 
 export var SatList = [] // Contains Satrecs of ALL available LEO Sats
@@ -58,6 +62,8 @@ export async function loadTLEList() {
                     const h = {
                         name: hname,    // name of Sat
                         sr: sr, // propagation satrec
+                        sat3obj: null, // Reserve Space for THREE Satelite object
+                        satPos: null // Position obj
                     }
                     SatList.push(h)
                 }
@@ -67,16 +73,14 @@ export async function loadTLEList() {
 }
 
 export function buildSelectedSatList(selmask){
+    const sellow = selmask.toLowerCase()
     SelSatList = []
-    SelSatList = SatList.filter((e) => e.name.toLowerCase().startsWith(selmask) )
+    SelSatList = SatList.filter((e) => e.name.toLowerCase().startsWith(sellow) )
     return SelSatList.length
 }
 
-export var Positions = [] // Aq. to SelSats - The Data
-
 // Calculate current Positions
 export function calcPositions(date = new Date()) {
-    var Positions = []
     for (let i = 0; i < SelSatList.length; i++) {
         const satrec =  SelSatList[i].sr;
         const positionAndVelocity = satellite.propagate(satrec, date)
@@ -99,7 +103,7 @@ export function calcPositions(date = new Date()) {
             alt: position.height,
             speed: vtotal
         }
-        Positions.push(hpos)
+            satrec.satPos = hpos
     }
 }
 

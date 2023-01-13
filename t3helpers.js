@@ -58,7 +58,7 @@ export function initJot3(useGH = true, useAH = true) {
 
 // Auto-Add  guiTerminal(txt) (very simple: overflow right, noscrollbars)
 // A Terminal
-var MAXTERM = 100 // Lines for Terminal
+var MAXTERM = 30 // Lines for Terminal
 var terminalContent = []
 var guix // internal
 var termDom = undefined
@@ -78,13 +78,14 @@ function initTerminal() {
   });
 }
 
-export function guiTerminal(txt) {
+export function guiTerminal(txt) {  // Return Anz available
   if (termOpt.showTerminal == false) return
   if (termDom === undefined) initTerminal()
 
   while (terminalContent.length > MAXTERM) terminalContent.shift()
   terminalContent.push(txt)
   termDom.innerText = terminalContent.join('\n')
+  return MAXTERM - terminalContent.length 
 }
 export function guiTerminalShow(f) {
   if (termDom === undefined) initTerminal()
