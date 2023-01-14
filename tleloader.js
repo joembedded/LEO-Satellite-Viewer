@@ -5,7 +5,7 @@
 // Cache download to ./data: via (e.g. by CRON) TLE-Data are valid for at least several days
 // curl -o tledata.txt "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
-import * as SAT from "./modules/satellite.min.js"
+import * as SAT from "./modules/satellite.min.js" // install via npm install satellite.js
 import {
     StaticCopyUsage
 } from "./modules/three.module.min.js"
@@ -70,7 +70,6 @@ export async function loadTLEList() {
                         sr: sr, // propagation satrec
                         sat3Obj: null, // Reserve Space for THREE Satelite object
                         satPos: null, // Position obj
-                        lastErr: 0 // If Err: Ignore
                     }
                     SatList.push(h)
                 }
@@ -83,7 +82,7 @@ export function buildSelectedSatList(selmask) {
     const sellow = selmask.toLowerCase()
     SelSatList = []
     SelSatList = SatList.filter((e) => {
-        e.lastErr = 0
+        e.sr.error = 0;
         return e.name.toLowerCase().startsWith(sellow)
     })
     return SelSatList.length
@@ -94,10 +93,13 @@ const CALCV = true // Speed only if necessary
 export function calcPositions(date = new Date()) {
     for (let i = 0; i < SelSatList.length; i++) {
         const satsel = SelSatList[i]
-        if (satsel.lastErr) continue; // Removed from List
         const satrec = satsel.sr;
+        if (satrec.error) continue; // Removed from List
         try {
             const positionAndVelocity = satellite.propagate(satrec, date)
+            if(satrec.error){
+                throw "satrec.error:"+satrec.error;
+            }
             const gmst = satellite.gstime(date)
             const position = satellite.eciToGeodetic(positionAndVelocity.position, gmst);
 

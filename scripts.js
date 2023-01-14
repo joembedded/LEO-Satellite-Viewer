@@ -99,7 +99,8 @@ function selectSats() {
 const appopt = {
   searchmask: 'Astrocast',
   puksize: 0.02, // rel to Earth (0.01: 60km!)
-  runtime: true,
+
+  stoprun: false,
 
   rx: 0,
   ry: 0,
@@ -146,12 +147,12 @@ function populateSatellites() {
     if (nSat == null) {
       nSprite = new THREE.Sprite(pukMaterial);
       nSprite.position.set(0, 0, 1) // Direct on Earth
-      nSprite.name = "s" + i // Name is Index in SelList
       nSat = new THREE.Object3D() // Center Obj
       nSat.add(nSprite)
       ses.sat3Obj = nSat
       ses.sat3ObjSprite = nSprite
     }
+    nSprite.name = "s" + i // Name is Index in SelList
     nSprite.scale.set(appopt.puksize, appopt.puksize)
     groupSatellites.add(nSat);
   }
@@ -166,37 +167,45 @@ function initMouse() {
   window.addEventListener('click', (e) => {
     mousePosition.x = (e.clientX / window.innerWidth) * 2 - 1;
     mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    //console.log("Click(rX,rY): ",mousePosition.x.toFixed(5),mousePosition.y.toFixed(5))
+    //console.log("Click(rX,rY): ", mousePosition.x.toFixed(5), mousePosition.y.toFixed(5))
     rayCaster.setFromCamera(mousePosition, camera);
     const intersects = rayCaster.intersectObjects(scene.children /*, false*/ ); //Deep
 
     intersects.every((e) => {
       const name = e.object.name
-      if (name == 'Earth') {
-        var t2 = cartesian2Polar(e.point);
-        //console.log("HIT(x,y,z):", e.point.x.toFixed(3), e.point.y.toFixed(3), e.point.z.toFixed(3))
-        var wgs = cartesian2Polar(e.point);
-        guiTerminal("Earth: Lat/Lng: " + wgs.lat.toFixed(2) + "/" + wgs.lng.toFixed(2)) // WGS84
-        // return true // Finish
+      if (name !== undefined) {
+        //console.log("Name: ", name)
+        if (name == 'Earth') {
+          var t2 = cartesian2Polar(e.point);
+          //console.log("HIT(x,y,z):", e.point.x.toFixed(3), e.point.y.toFixed(3), e.point.z.toFixed(3))
+          var wgs = cartesian2Polar(e.point);
+          guiTerminal("\u25cf Earth: Lat/Lng: " + wgs.lat.toFixed(2) + "/" + wgs.lng.toFixed(2)) // WGS84
+          return false // Bye!
+        }
+        if (name.startsWith('s')) {
+          const idx = parseInt(name.substring(1))
+          const sat = TLE.SelSatList[idx]
+          guiTerminal("\u25cf Satellite '" + sat.name + "':");
+          if(sat.satPos == null){
+            guiTerminal("- Error: 'satrec.error:"+sat.sr.error+"'");
+          }else{
+          guiTerminal("- Lat/Lng: " + satellite.degreesLong(sat.satPos.lat).toFixed(3) + "/" +
+            satellite.degreesLong(sat.satPos.lng).toFixed(3))
+          guiTerminal("- Altitude: " + sat.satPos.alt.toFixed(0) + " km");
+          if (sat.satPos.speed !== undefined)
+            guiTerminal("- Speed: " + sat.satPos.speed.toFixed(3) + "km/sec");
+          }
+          return false // Bye!
+        }
       }
-      if (name.startsWith('s')) {
-        const idx = parseInt(name.substring(1))
-        const sat = TLE.SelSatList[idx]
-        guiTerminal("Satellite '" + sat.name + "':");
-        guiTerminal("- Lat/Lng: " + satellite.degreesLong(sat.satPos.lat).toFixed(3) + "/" +
-          satellite.degreesLong(sat.satPos.lng).toFixed(3))
-        guiTerminal("- Altitude: " + sat.satPos.alt.toFixed(0) + " km");
-        if (sat.satPos.speed !== undefined)
-          guiTerminal("- Speed: " + sat.satPos.speed.toFixed(3) + "km/sec");
-
-      }
+      return true // Continue
     })
   });
 }
 
 //==================== MAIN ====================
 try {
-  initJot3(/*false, false*/); // Init Jo 3D Framwwork orbitcontrol, camera, scene
+  initJot3( false, false ); // Init Jo 3D Framwwork orbitcontrol, camera, scene
 
   const appoptions = gui.addFolder("App Options");
   appoptions.open();
@@ -218,13 +227,14 @@ try {
       populateSatellites()
     })
 
-  appoptions.add(appopt, 'runtime').name("Realtime")
-  
+  appoptions.add(appopt, 'stoprun').name("Halt")
+  appoptions.add(appopt, 'rx', -90, 90, 0.1).name("Lat")
 
-  appoptions.add(appopt, 'rx',-90,90,0.1).name("Lat")
-  appoptions.add(appopt, 'ry',-180,180,0.1).name("Lng")
-  appoptions.add(appopt, 'rz',-7,7,0.01)
-
+/*
+  appoptions.add(appopt, 'rx', -90, 90, 0.1).name("Lat")
+  appoptions.add(appopt, 'ry', -180, 180, 0.1).name("Lng")
+  appoptions.add(appopt, 'rz', -7, 7, 0.01)
+*/
 
   monitorView() // Check Coords
 
@@ -307,36 +317,41 @@ try {
   })
   */
 
-
+  const tsZero = new Date().getTime() // NOW
+  const speedfactor = 100
+  
   // ---Animate all---
   function animate() {
     //circleBeam.rotation.x+=0.01
-    if (appopt.runtime) {
-      TLE.calcPositions();
+    if (!appopt.stoprun) {
+      const tsDelta = (Date.now()-tsZero)*speedfactor;
+      const cdate = new Date(tsZero+tsDelta)
+      // console.log(cdate.toString(), (tsDelta/1000))
+
+      TLE.calcPositions(cdate);
+
       TLE.SelSatList.forEach((e) => {
-        if (!e.lastErr) {
-          try {
-            const hpos = e.satPos
-            const nSat = e.sat3Obj
+          const nSat = e.sat3Obj
+          const hpos = e.satPos
+          if(hpos != null){
+            nSat.scale.z = 1 + (hpos.alt / EARTH_RADIUS_KM)
 
             //nSat.rotation.z = 0.853; // hpos.lng
             //nSat.rotation.y = 0.08; // hpos.lat 
-
-nSat.rotation.x = - appopt.rx / 180 * Math.PI
-nSat.rotation.y = appopt.ry / 180 * Math.PI
-nSat.rotation.z = appopt.rz
-
-
-            nSat.scale.z = 1 + (hpos.alt / EARTH_RADIUS_KM)
-          } catch (err) {
-            console.log("animate(): Problem '" + err + "' with '" + e.name + "'")
-            e.lastErr = 1;
+       nSat.setRotationFromEuler(new THREE.Euler( -hpos.lat, hpos.lng,0,'YXZ' ));
+/*
+            nSat.rotation.y = appopt.ry / 180 * Math.PI
+            nSat.rotation.x = -appopt.rx / 180 * Math.PI
+            nSat.rotation.z = appopt.rz
+      nSat.setRotationFromEuler(new THREE.Euler( -appopt.rx / 180 * Math.PI, appopt.ry / 180 * Math.PI,0,'YXZ' ));
+*/
           }
-        }
+          
       })
     }
     renderer.render(scene, camera);
   }
+
   renderer.setAnimationLoop(animate);
 
 } catch (err) {
