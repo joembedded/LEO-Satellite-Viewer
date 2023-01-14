@@ -98,6 +98,13 @@ function selectSats() {
 //--- App Options ---
 const appopt = {
   searchmask: 'Astrocast',
+  puksize: 0.02, // rel to Earth (0.01: 60km!)
+  runtime: true,
+
+  rx: 0,
+  ry: 0,
+  rz: 0,
+
 }
 
 var appdatagui;
@@ -126,8 +133,6 @@ const pukMaterial = new THREE.SpriteMaterial({
   depthWrite: false
 });
 
-const PUKSIZE = 0.01 // rel to Earth
-
 // Add to groupSatellites - make visible
 function populateSatellites() {
   // Remove visible Elements form rendering (but not disposed)
@@ -137,23 +142,61 @@ function populateSatellites() {
     const ses = TLE.SelSatList[i];
 
     var nSat = ses.sat3Obj
-    if (nSat == null) { 
-      const nSprite = new THREE.Sprite(pukMaterial);
-      nSprite.scale.set(PUKSIZE, PUKSIZE)
-      nSprite.position.set(0, 0, 1.1)
-      nSat = new THREE.Object3D(); // Center Obj
+    var nSprite = ses.sat3ObjSprite
+    if (nSat == null) {
+      nSprite = new THREE.Sprite(pukMaterial);
+      nSprite.position.set(0, 0, 1) // Direct on Earth
+      nSprite.name = "s" + i // Name is Index in SelList
+      nSat = new THREE.Object3D() // Center Obj
       nSat.add(nSprite)
-      nSat.rotation.y = i / 100
       ses.sat3Obj = nSat
+      ses.sat3ObjSprite = nSprite
     }
+    nSprite.scale.set(appopt.puksize, appopt.puksize)
     groupSatellites.add(nSat);
   }
   // Now visSats ready
 }
 
+// Mouse-Functions
+const mousePosition = new THREE.Vector2();
+const rayCaster = new THREE.Raycaster();
+
+function initMouse() {
+  window.addEventListener('click', (e) => {
+    mousePosition.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    //console.log("Click(rX,rY): ",mousePosition.x.toFixed(5),mousePosition.y.toFixed(5))
+    rayCaster.setFromCamera(mousePosition, camera);
+    const intersects = rayCaster.intersectObjects(scene.children /*, false*/ ); //Deep
+
+    intersects.every((e) => {
+      const name = e.object.name
+      if (name == 'Earth') {
+        var t2 = cartesian2Polar(e.point);
+        //console.log("HIT(x,y,z):", e.point.x.toFixed(3), e.point.y.toFixed(3), e.point.z.toFixed(3))
+        var wgs = cartesian2Polar(e.point);
+        guiTerminal("Earth: Lat/Lng: " + wgs.lat.toFixed(2) + "/" + wgs.lng.toFixed(2)) // WGS84
+        // return true // Finish
+      }
+      if (name.startsWith('s')) {
+        const idx = parseInt(name.substring(1))
+        const sat = TLE.SelSatList[idx]
+        guiTerminal("Satellite '" + sat.name + "':");
+        guiTerminal("- Lat/Lng: " + satellite.degreesLong(sat.satPos.lat).toFixed(3) + "/" +
+          satellite.degreesLong(sat.satPos.lng).toFixed(3))
+        guiTerminal("- Altitude: " + sat.satPos.alt.toFixed(0) + " km");
+        if (sat.satPos.speed !== undefined)
+          guiTerminal("- Speed: " + sat.satPos.speed.toFixed(3) + "km/sec");
+
+      }
+    })
+  });
+}
+
 //==================== MAIN ====================
 try {
-  initJot3(); // Init Jo 3D Framwwork orbitcontrol, camera, scene
+  initJot3(/*false, false*/); // Init Jo 3D Framwwork orbitcontrol, camera, scene
 
   const appoptions = gui.addFolder("App Options");
   appoptions.open();
@@ -168,14 +211,28 @@ try {
 
   genEarth() // R=1
 
-  monitorView() // Mouse Handler
+  // Search action after load
+  const h = appoptions.add(appopt, 'puksize', 0.001, 0.05).name("Sat.Size")
+  h.onChange(
+    () => {
+      populateSatellites()
+    })
+
+  appoptions.add(appopt, 'runtime').name("Realtime")
+  
+
+  appoptions.add(appopt, 'rx',-90,90,0.1).name("Lat")
+  appoptions.add(appopt, 'ry',-180,180,0.1).name("Lng")
+  appoptions.add(appopt, 'rz',-7,7,0.01)
+
+
+  monitorView() // Check Coords
 
   guiTerminal("Load LEO Satellite Data...")
   tleSetup()
-
   scene.add(groupSatellites)
 
-
+  initMouse()
 
   /*
   var opt = {
@@ -254,12 +311,30 @@ try {
   // ---Animate all---
   function animate() {
     //circleBeam.rotation.x+=0.01
+    if (appopt.runtime) {
+      TLE.calcPositions();
+      TLE.SelSatList.forEach((e) => {
+        if (!e.lastErr) {
+          try {
+            const hpos = e.satPos
+            const nSat = e.sat3Obj
 
-    TLE.calcPositions();
-    TLE.SelSatList.forEach((e)=>{
+            //nSat.rotation.z = 0.853; // hpos.lng
+            //nSat.rotation.y = 0.08; // hpos.lat 
 
-    })
+nSat.rotation.x = - appopt.rx / 180 * Math.PI
+nSat.rotation.y = appopt.ry / 180 * Math.PI
+nSat.rotation.z = appopt.rz
 
+
+            nSat.scale.z = 1 + (hpos.alt / EARTH_RADIUS_KM)
+          } catch (err) {
+            console.log("animate(): Problem '" + err + "' with '" + e.name + "'")
+            e.lastErr = 1;
+          }
+        }
+      })
+    }
     renderer.render(scene, camera);
   }
   renderer.setAnimationLoop(animate);

@@ -6,7 +6,9 @@
 // curl -o tledata.txt "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
 import * as SAT from "./modules/satellite.min.js"
-import { StaticCopyUsage } from "./modules/three.module.min.js"
+import {
+    StaticCopyUsage
+} from "./modules/three.module.min.js"
 
 
 export var SatList = [] // Contains Satrecs of ALL available LEO Sats
@@ -15,10 +17,11 @@ export var SelSatList = [] // List of Selected Sats
 // Debug-Terminal
 var MAXTERM = 100 // Lines for Terminal
 var terminalContent = []
+
 function Terminal(txt, flush = true) {
     while (terminalContent.length > MAXTERM) terminalContent.shift()
     terminalContent.push(txt)
-    if(flush){
+    if (flush) {
         const h = document.getElementById('id_txt').innerText = terminalContent.join(' | ')
     }
 }
@@ -37,7 +40,7 @@ async function fetchData(file) { // ATTENTION: Fetch only via HTTP
 }
 
 const MinutesPerDay = 1440;
-const ixpdotp = MinutesPerDay / (2.0 * 3.141592654)                     
+const ixpdotp = MinutesPerDay / (2.0 * 3.141592654)
 
 /* Load List of all currently active LEO Satellites */
 export async function loadTLEList() {
@@ -56,14 +59,18 @@ export async function loadTLEList() {
                 let hl1 = tmplist[i + 2].trim()
                 if (hname.length && hl0.startsWith('1') && hl1.startsWith('2')) {
                     const sr = satellite.twoline2satrec(hl0, hl1);
-                    if(sr.error) continue;  // Error in TLE-Data
+                    if (sr.error) {
+                        console.log("loadTLEList(): Error " + sr.error + " for TLE '" + hname.length + "'")
+                        continue; // Error in TLE-Data
+                    }
                     const revsPerDay = sr.no * ixpdotp;
-                    if(revsPerDay < 6.4) continue;  // A LEO St has per Def. <225 minutes per orbit!
+                    if (revsPerDay < 6.4) continue; // A LEO St has per Def. <225 minutes per orbit!
                     const h = {
-                        name: hname,    // name of Sat
+                        name: hname, // name of Sat
                         sr: sr, // propagation satrec
-                        sat3obj: null, // Reserve Space for THREE Satelite object
-                        satPos: null // Position obj
+                        sat3Obj: null, // Reserve Space for THREE Satelite object
+                        satPos: null, // Position obj
+                        lastErr: 0 // If Err: Ignore
                     }
                     SatList.push(h)
                 }
@@ -72,38 +79,51 @@ export async function loadTLEList() {
     }
 }
 
-export function buildSelectedSatList(selmask){
+export function buildSelectedSatList(selmask) {
     const sellow = selmask.toLowerCase()
     SelSatList = []
-    SelSatList = SatList.filter((e) => e.name.toLowerCase().startsWith(sellow) )
+    SelSatList = SatList.filter((e) => {
+        e.lastErr = 0
+        return e.name.toLowerCase().startsWith(sellow)
+    })
     return SelSatList.length
 }
 
+const CALCV = true // Speed only if necessary
 // Calculate current Positions
 export function calcPositions(date = new Date()) {
     for (let i = 0; i < SelSatList.length; i++) {
-        const satrec =  SelSatList[i].sr;
-        const positionAndVelocity = satellite.propagate(satrec, date)
-        const gmst = satellite.gstime(date)
-        const position = satellite.eciToGeodetic(positionAndVelocity.position, gmst);
-        const velocity = positionAndVelocity.velocity;
-        const vtotal = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y + velocity.z * velocity.z)
+        const satsel = SelSatList[i]
+        if (satsel.lastErr) continue; // Removed from List
+        const satrec = satsel.sr;
+        try {
+            const positionAndVelocity = satellite.propagate(satrec, date)
+            const gmst = satellite.gstime(date)
+            const position = satellite.eciToGeodetic(positionAndVelocity.position, gmst);
 
-        /*
-        console.log("Name: ",SelSatList[i].name)
-        console.log("Lng:", satellite.degreesLong(position.longitude).toFixed(3)); // p.l in radians
-        console.log("Lat:", satellite.degreesLong(position.latitude).toFixed(3)); // p.l in radians
-        console.log("Altitude(km):", position.height.toFixed(3)); 
-        console.log("Speed(km/sec): "+vtotal.toFixed(3)); 
-        */
-
-        const hpos = {
-            lng: position.longitude,
-            lat: position.latitude,
-            alt: position.height,
-            speed: vtotal
+            var vtotal
+            if (CALCV) {
+                const velocity = positionAndVelocity.velocity;
+                vtotal = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y + velocity.z * velocity.z)
+            } else vtotal = 0
+            /*
+            console.log("Name: ",SatListSel[i].name)
+            console.log("Lng:", satellite.degreesLong(position.longitude).toFixed(3)); // p.l in radians
+            console.log("Lat:", satellite.degreesLong(position.latitude).toFixed(3)); // p.l in radians
+            console.log("Altitude(km):", position.height.toFixed(3)); 
+            //console.log("Speed(km/sec): "+vtotal.toFixed(3)); 
+            */
+            const hpos = {
+                lng: position.longitude,
+                lat: position.latitude,
+                alt: position.height,
+                speed: vtotal
+            }
+            SelSatList[i].satPos = hpos
+        } catch (e) {
+            console.log("calcPositions(): Problem '" + e + "' with '" + SelSatList[i].name + "'")
+            SelSatList[i].satPos = null
         }
-            satrec.satPos = hpos
     }
 }
 
