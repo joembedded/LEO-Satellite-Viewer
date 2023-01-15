@@ -88,7 +88,7 @@ export function buildSelectedSatList(selmask) {
     return SelSatList.length
 }
 
-const CALCV = true // Speed only if necessary
+const CALCV = false // true // Speed only if necessary
 // Calculate current Positions
 export function calcPositions(date = new Date()) {
     for (let i = 0; i < SelSatList.length; i++) {

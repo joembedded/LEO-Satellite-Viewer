@@ -31,8 +31,7 @@ const globeImg = './img/earth-jo.jpg'; // Earth
 const EARTH_RADIUS_KM = 6371 // km (== 1 UNIT)
 
 // --- Globals ---
-var altitudeKm = 0 // Altitude of camera
-
+var altitudeKm = 0 // Altitude of camera opt
 const groupSatellites = new THREE.Group(); // List of displayed satellites
 
 // --- Functions ---
@@ -74,7 +73,8 @@ function monitorView() {
 
     altitudeKm = ((d - 1) * EARTH_RADIUS_KM)
     // guiTerminal("Alt(km): " + altitudeKm.toFixed(0))
-    if (d < 1.2 || d > 100) { // EARTH RADs
+    // console.log("ALt(d): ",d)
+    if (d < 1.2 || d > 6) { // EARTH RADs
       camera.position.copy(lastCamPos)
     } else {
       lastCamPos.copy(e)
@@ -96,19 +96,21 @@ function selectSats() {
 }
 
 //--- App Options ---
+var tsZero = Date.now() // Updated on Hold
 const appopt = {
   searchmask: 'Astrocast',
   puksize: 0.02, // rel to Earth (0.01: 60km!)
-
+  fspeed: 10,
   stoprun: false,
-
-  rx: 0,
-  ry: 0,
-  rz: 0,
-
+  showbackimg: true,
+  /*
+    rx: 0,
+    ry: 0,
+    rz: 0,
+  */
 }
-
 var appdatagui;
+
 // Load LEO Data
 async function tleSetup() {
 
@@ -186,14 +188,14 @@ function initMouse() {
           const idx = parseInt(name.substring(1))
           const sat = TLE.SelSatList[idx]
           guiTerminal("\u25cf Satellite '" + sat.name + "':");
-          if(sat.satPos == null){
-            guiTerminal("- Error: 'satrec.error:"+sat.sr.error+"'");
-          }else{
-          guiTerminal("- Lat/Lng: " + satellite.degreesLong(sat.satPos.lat).toFixed(3) + "/" +
-            satellite.degreesLong(sat.satPos.lng).toFixed(3))
-          guiTerminal("- Altitude: " + sat.satPos.alt.toFixed(0) + " km");
-          if (sat.satPos.speed !== undefined)
-            guiTerminal("- Speed: " + sat.satPos.speed.toFixed(3) + "km/sec");
+          if (sat.satPos == null) {
+            guiTerminal("- Error: 'satrec.error:" + sat.sr.error + "'");
+          } else {
+            guiTerminal("- Lat/Lng: " + satellite.degreesLong(sat.satPos.lat).toFixed(3) + "/" +
+              satellite.degreesLong(sat.satPos.lng).toFixed(3))
+            guiTerminal("- Altitude: " + sat.satPos.alt.toFixed(0) + " km");
+            if (sat.satPos.speed) // >0 (only if enabled)
+              guiTerminal("- Speed: " + sat.satPos.speed.toFixed(3) + "km/sec");
           }
           return false // Bye!
         }
@@ -205,7 +207,7 @@ function initMouse() {
 
 //==================== MAIN ====================
 try {
-  initJot3( false, false ); // Init Jo 3D Framwwork orbitcontrol, camera, scene
+  initJot3(false, false); // Init Jo 3D Framwwork orbitcontrol, camera, scene
 
   const appoptions = gui.addFolder("App Options");
   appoptions.open();
@@ -216,7 +218,8 @@ try {
   guiTerminal("")
 
   // Background - 6 ident. Sides Box
-  scene.background = new THREE.CubeTextureLoader().load(Array(6).fill(backgroundImage));
+  const backgroundcube = new THREE.CubeTextureLoader().load(Array(6).fill(backgroundImage));
+  scene.background = (appopt.showbackimg) ? backgroundcube : undefined;
 
   genEarth() // R=1
 
@@ -227,10 +230,16 @@ try {
       populateSatellites()
     })
 
-  appoptions.add(appopt, 'stoprun').name("Halt")
-  appoptions.add(appopt, 'rx', -90, 90, 0.1).name("Lat")
+  appoptions.add(new function () {
+    this.cam0 = () => cameraHome()
+  }, 'cam0').name("[ Camera Home ]");
 
-/*
+  appoptions.add(appopt, 'stoprun').name("Halt")
+  appoptions.add(appopt, 'fspeed', -100, 100, 10).name("Speed Factor")
+  appoptions.add(appopt, 'showbackimg').name("Background Image").onChange(() => scene.background = (appopt.showbackimg) ? backgroundcube : undefined)
+
+  /*
+  appoptions.add(appopt, 'rx', -90, 90, 0.1).name("Lat")
   appoptions.add(appopt, 'rx', -90, 90, 0.1).name("Lat")
   appoptions.add(appopt, 'ry', -180, 180, 0.1).name("Lng")
   appoptions.add(appopt, 'rz', -7, 7, 0.01)
@@ -317,42 +326,47 @@ try {
   })
   */
 
-  const tsZero = new Date().getTime() // NOW
-  const speedfactor = 100
-  
   // ---Animate all---
+  // Frame
+  var cdate = Date.now()
+
   function animate() {
     //circleBeam.rotation.x+=0.01
     if (!appopt.stoprun) {
-      const tsDelta = (Date.now()-tsZero)*speedfactor;
-      const cdate = new Date(tsZero+tsDelta)
+      const tsDelta = (Date.now() - tsZero) * appopt.fspeed
+      cdate = new Date(tsZero + tsDelta)
+
       // console.log(cdate.toString(), (tsDelta/1000))
 
       TLE.calcPositions(cdate);
 
       TLE.SelSatList.forEach((e) => {
-          const nSat = e.sat3Obj
-          const hpos = e.satPos
-          if(hpos != null){
-            nSat.scale.z = 1 + (hpos.alt / EARTH_RADIUS_KM)
+        const nSat = e.sat3Obj
+        const hpos = e.satPos
+        if (hpos != null) {
+          nSat.scale.z = 1 + (hpos.alt / EARTH_RADIUS_KM)
 
-            //nSat.rotation.z = 0.853; // hpos.lng
-            //nSat.rotation.y = 0.08; // hpos.lat 
-       nSat.setRotationFromEuler(new THREE.Euler( -hpos.lat, hpos.lng,0,'YXZ' ));
-/*
-            nSat.rotation.y = appopt.ry / 180 * Math.PI
-            nSat.rotation.x = -appopt.rx / 180 * Math.PI
-            nSat.rotation.z = appopt.rz
-      nSat.setRotationFromEuler(new THREE.Euler( -appopt.rx / 180 * Math.PI, appopt.ry / 180 * Math.PI,0,'YXZ' ));
-*/
-          }
-          
+          //nSat.rotation.z = 0.853; // hpos.lng
+          //nSat.rotation.y = 0.08; // hpos.lat 
+          nSat.setRotationFromEuler(new THREE.Euler(-hpos.lat, hpos.lng, 0, 'YXZ'));
+          /*
+                      nSat.rotation.y = appopt.ry / 180 * Math.PI
+                      nSat.rotation.x = -appopt.rx / 180 * Math.PI
+                      nSat.rotation.z = appopt.rz
+                nSat.setRotationFromEuler(new THREE.Euler( -appopt.rx / 180 * Math.PI, appopt.ry / 180 * Math.PI,0,'YXZ' ));
+          */
+        }
+
       })
     }
     renderer.render(scene, camera);
   }
 
   renderer.setAnimationLoop(animate);
+
+  setInterval(()=>{
+    console.log(cdate)
+  },1000)
 
 } catch (err) {
   alert("\u274C ERROR: - Reason: '" + err + "'")

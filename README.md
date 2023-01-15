@@ -2,7 +2,7 @@
 
 JoEmbedded 
 
-https://joembedded.github.io/LEO-Satellite-Viewer/
+https://joembedded.github.io/LEO-Satellite-Viewer
 
 
 ***
