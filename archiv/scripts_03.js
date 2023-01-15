@@ -34,8 +34,6 @@ const EARTH_RADIUS_KM = 6371 // km (== 1 UNIT)
 var altitudeKm = 0 // Altitude of camera opt
 const groupSatellites = new THREE.Group(); // List of displayed satellites
 
-const groupTrajectories = new THREE.Group(); // List of Trajectories
-
 // --- Functions ---
 function genEarth() { // Earth
   const earthTexture = new THREE.TextureLoader().load(globeImg);
@@ -103,7 +101,6 @@ const appopt = {
   searchmask: 'Astrocast',
   puksize: 0.02, // rel to Earth (0.01: 60km!)
   fspeed: 10,
-  propsec: 600, // 5500: ca 1 Cycle Propagation lenth in sec (if >0)
   stoprun: false,
   showbackimg: true,
   /*
@@ -112,9 +109,7 @@ const appopt = {
     rz: 0,
   */
 }
-var appdgsearch;
-var appdgprop;
-var needsprop = false;
+var appdatagui;
 
 // Load LEO Data
 async function tleSetup() {
@@ -122,18 +117,12 @@ async function tleSetup() {
   await TLE.loadTLEList()
   guiTerminal("Loaded " + TLE.SatList.length + " LEO Satellites")
   selectSats(false) // NoClear Terminal
-
   populateSatellites()
-  needsprop = true;
-  appdgsearch.onChange(() => {
+  appdatagui.onChange(() => {
     // console.log(appopt.searchmask)
     guiTerminalClear(); // Clear Terminal
     selectSats();
     populateSatellites()
-    needsprop = true;
-  })
-  appdgprop.onChange(() => {
-    needsprop = true;
   })
 
 }
@@ -146,57 +135,6 @@ const pukMaterial = new THREE.SpriteMaterial({
   transparent: true,
   depthWrite: false
 });
-const lineMaterialTrack = new THREE.LineBasicMaterial({
-  color: 'red',
-  transparent: true,
-  opacity: 0.4
-});
-
-// Build Trajektory for rec anz steps per sec
-function trajektorie(t0, sr, anz, msec) {
-  let points = [];
-  for (let i = 0; i < anz; i++) {
-    const tdate = new Date(t0 + i * msec)
-    const hpos = TLE.calcSrPositionEci(sr, tdate)
-    if (hpos == undefined) return
-    var rad = 1 + (hpos.alt / EARTH_RADIUS_KM)
-    const kr = rad * Math.cos(hpos.lat)
-    const x = kr * Math.sin(hpos.lng) // x:+nach rechts
-    const z = kr * Math.cos(hpos.lng) // z:+nach Vorne
-    const y = rad * Math.sin(hpos.lat) // y:+nach oben
-    points.push(new THREE.Vector3(x, y, z));
-  }
-  return new THREE.BufferGeometry().setFromPoints(points)
-}
-
-const TRACKRES = 200 // 200 sec/Track-Einheit
-// Fill/Remove Tracks
-function populateTracks() {
-  groupTrajectories.clear();
-  TLE.SatList.forEach((e) => { // Fur alle Sats
-    if (e.track != null) {
-      e.track.dispose(); // Geometrie entfernen
-      e.track = null;
-    }
-  })
-
-  if (appopt.propsec > 0) {
-    TLE.SelSatList.forEach((e) => {
-      const anzsteps = appopt.propsec / TRACKRES
-      if (anzsteps >= 2) { // Min. fuer Linie
-console.log(anzsteps,TLE.SelSatList.length)
-        const tr = trajektorie(Date.now(), e.sr, anzsteps, TRACKRES * 1000)
-        if (tr !== undefined) {
-          const hobj = new THREE.Object3D();
-          const hline = new THREE.Line(tr, lineMaterialTrack)
-          hobj.add(hline)
-          groupTrajectories.add(hobj)
-          e.track = tr
-        }
-      }
-    })
-  }
-}
 
 // Add to groupSatellites - make visible
 function populateSatellites() {
@@ -205,6 +143,7 @@ function populateSatellites() {
 
   for (let i = 0; i < TLE.SelSatList.length; i++) {
     const ses = TLE.SelSatList[i];
+
     var nSat = ses.sat3Obj
     var nSprite = ses.sat3ObjSprite
     if (nSat == null) {
@@ -272,9 +211,9 @@ try {
 
   const appoptions = gui.addFolder("App Options");
   appoptions.open();
-  appdgsearch = appoptions.add(appopt, 'searchmask').name("Searchmask")
+  appdatagui = appoptions.add(appopt, 'searchmask').name("Searchmask")
 
-  guiTerminal("\u2b50 LEO View - Satellite Tracker \u2b50")
+  guiTerminal("\u2b50 LEO Satellite Viewer \u2b50")
   guiTerminal("JoEmbedded.de / V0.1")
   guiTerminal("")
 
@@ -296,19 +235,96 @@ try {
   }, 'cam0').name("[ Camera Home ]");
 
   appoptions.add(appopt, 'stoprun').name("Halt")
-  appoptions.add(appopt, 'fspeed', -100, 100, 1).name("Speed Factor")
-  appdgprop = appoptions.add(appopt, 'propsec', 0, 86400, 400).name("Prop.(sec)")
-
+  appoptions.add(appopt, 'fspeed', -1000, 1000, 1).name("Speed Factor")
   appoptions.add(appopt, 'showbackimg').name("Background Image").onChange(() => scene.background = (appopt.showbackimg) ? backgroundcube : undefined)
+
+  /*
+  appoptions.add(appopt, 'rx', -90, 90, 0.1).name("Lat")
+  appoptions.add(appopt, 'rx', -90, 90, 0.1).name("Lat")
+  appoptions.add(appopt, 'ry', -180, 180, 0.1).name("Lng")
+  appoptions.add(appopt, 'rz', -7, 7, 0.01)
+*/
 
   monitorView() // Check Coords
 
   guiTerminal("Load LEO Satellite Data...")
   tleSetup()
   scene.add(groupSatellites)
-  scene.add(groupTrajectories)
 
   initMouse()
+
+  /*
+  var opt = {
+    krad: 1,
+    kdist: 1 ,  // Grob
+    kdistf: 0,  // Fein
+    kroty: 0,
+    krotx: 0,
+    opa: 0.5
+  }
+
+  const lineMaterialRed = new THREE.LineBasicMaterial({color: 'red',transparent: true, opacity: 0.8 }); 
+  const ANZSEG = 30 // Anzahl Segments Standardkreis
+  function circleInit(){
+    let rstep = Math.PI*2 / ANZSEG
+    let points = [];
+    for(let i=0; i<Math.PI*2; i+= rstep){
+      points.push(new THREE.Vector3(Math.sin(i), Math.cos(i), 0));
+    }
+    points.push(points[0])
+    return new THREE.BufferGeometry().setFromPoints(points)
+  }
+
+  const circleGeometry = circleInit()
+
+  // A circle on he ground or above Earth
+  function earthCircle(hrad, hdisp, hlinemat = lineMaterialRed){
+    const hcircle = new THREE.Object3D();
+    const hcirclegeo = new THREE.Line(circleGeometry, hlinemat)
+    hcircle.add(hcirclegeo);
+    hcircle.position.z = hdisp
+    hcircle.scale.x = hrad
+    hcircle.scale.y = hrad
+    return hcircle
+  }
+
+  const circleBeam = new THREE.Object3D();
+
+  const circle = earthCircle(0.1, opt.kdist+ opt.kdistf,new THREE.LineBasicMaterial({color: 'green' })); 
+
+  circleBeam.add(circle);
+
+  for(let i=1.0;i<2;i+=0.05) circleBeam.add(earthCircle(i/8,i));
+
+
+  circleBeam.scale.x=opt.krad
+  circleBeam.scale.y=opt.krad // Z without Function for Circle
+  scene.add(circleBeam);
+
+
+  gui.add(opt,'kdist',-3,3,0.1).onChange(()=>{
+    circle.position.z = opt.kdist+ opt.kdistf;
+  })
+  gui.add(opt,'kdistf',-0.2,0.2,0.01).onChange(()=>{
+    circle.position.z = opt.kdist+ opt.kdistf;
+  })
+  gui.add(opt,'krad',0,1.2,0.05).onChange(()=>{
+    circleBeam.scale.x=opt.krad
+    circleBeam.scale.y=opt.krad
+  })
+  gui.add(opt,'kroty',-1,1, 0.05).onChange(()=>{
+  //guiTerminal("Ry: "+opt.kroty)
+  circleBeam.rotation.y = opt.kroty
+  })
+  gui.add(opt,'krotx',-1,1, 0.05).onChange(()=>{
+  //  guiTerminal("Rx: "+opt.krotx)
+    circleBeam.rotation.x = opt.krotx
+    })
+    gui.add(opt,'opa',0,1, 0.05).onChange(()=>{
+  //    guiTerminal("Rx: "+opt.krotx)
+  lineMaterialRed.opacity = opt.opa
+  })
+  */
 
   // ---Animate all---
   // Frame
@@ -330,7 +346,15 @@ try {
         if (hpos != null) {
           nSat.scale.z = 1 + (hpos.alt / EARTH_RADIUS_KM)
 
+          //nSat.rotation.z = 0.853; // hpos.lng
+          //nSat.rotation.y = 0.08; // hpos.lat 
           nSat.setRotationFromEuler(new THREE.Euler(-hpos.lat, hpos.lng, 0, 'YXZ'));
+          /*
+                      nSat.rotation.y = appopt.ry / 180 * Math.PI
+                      nSat.rotation.x = -appopt.rx / 180 * Math.PI
+                      nSat.rotation.z = appopt.rz
+                nSat.setRotationFromEuler(new THREE.Euler( -appopt.rx / 180 * Math.PI, appopt.ry / 180 * Math.PI,0,'YXZ' ));
+          */
         }
 
       })
@@ -341,16 +365,12 @@ try {
   renderer.setAnimationLoop(animate);
 
   const idtime = document.getElementById('id_time')
-  setInterval(() => {
+  setInterval(()=>{
     var tdisp = cdate.toUTCString();
-    if (appopt.fspeed == 1) tdisp += ' (Realtime)'
-    else tdisp += ' (Speed: ' + appopt.fspeed + ')'
+    if(appopt.fspeed == 1) tdisp += ' (Realtime)'
+    else tdisp+= ' (Speed: '+appopt.fspeed+')'
     idtime.innerText = tdisp
-    if(needsprop==true){
-      needsprop=false
-      populateTracks()
-    }
-  }, 1000)
+  },1000)
 
 } catch (err) {
   alert("\u274C ERROR: - Reason: '" + err + "'")

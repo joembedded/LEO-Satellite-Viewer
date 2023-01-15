@@ -70,6 +70,7 @@ export async function loadTLEList() {
                         sr: sr, // propagation satrec
                         sat3Obj: null, // Reserve Space for THREE Satelite object
                         satPos: null, // Position obj
+                        track: null,    // Track as Option
                     }
                     SatList.push(h)
                 }
@@ -86,6 +87,22 @@ export function buildSelectedSatList(selmask) {
         return e.name.toLowerCase().startsWith(sellow)
     })
     return SelSatList.length
+}
+
+// Calculate one Position
+export function calcSrPositionEci(satrec, date) {
+    const positionAndVelocity = satellite.propagate(satrec, date)
+    if(satrec.error) return;    // undefined
+
+    const gmst = satellite.gstime(date)
+    const position = satellite.eciToGeodetic(positionAndVelocity.position, gmst);
+    
+    const hpos = {
+        lng: position.longitude,
+        lat: position.latitude,
+        alt: position.height,
+    }
+    return hpos;
 }
 
 const CALCV = false // true // Speed only if necessary

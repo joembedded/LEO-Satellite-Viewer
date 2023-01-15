@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--  https://github.com/joembedded/LEO-Satellite-Viewer  -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,15 +14,21 @@
             position: absolute;
             padding: 5px;
             left: 16px;
-            bottom: 16px;
-            width: 50%;
+            top: 16px;
             color: #E0E0E0;
             background-color: #1a1a1a;
+            font:16px 'Lucida Grande', sans-serif;
+        }
+        a:link, a:visited {
+              color: #1e65ff;
         }
     </style>
 </head>
 <body>
-    <div class="topinfo">Topinfo</div>
+    <div class="topinfo">
+        <b>LEO View - Satellite Tracker</b> <a href="https://github.com/joembedded/LEO-Satellite-Viewer" target="_blank"> [ Home ] </a><br>
+        <span id="id_time"></span>
+    </div>
     <!-- FullSize 3D -->
     <script src="./scripts.js" type="module"></script>
 </body>
