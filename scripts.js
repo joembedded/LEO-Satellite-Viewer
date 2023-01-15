@@ -100,7 +100,7 @@ function selectSats() {
 //--- App Options ---
 var tsZero = Date.now() // Updated on Hold
 const appopt = {
-  searchmask: 'Astrocast',
+  searchmask: 'spacebee',
   puksize: 0.02, // rel to Earth (0.01: 60km!)
   fspeed: 10,
   propsec: 600, // 5500: ca 1 Cycle Propagation lenth in sec (if >0)
@@ -138,18 +138,32 @@ async function tleSetup() {
 
 }
 
-// Standard Gray PUK
-const pukImg = './img/puk_256.png'; // PNG: transparent
-const pukTexture = new THREE.TextureLoader().load(pukImg);
-const pukMaterial = new THREE.SpriteMaterial({
-  map: pukTexture,
-  transparent: true,
-  depthWrite: false
-});
+function genPuk(fnamepuk){
+  const dpuktex = new THREE.TextureLoader().load(fnamepuk);
+  const dpukm = new THREE.SpriteMaterial({
+    map: dpuktex,
+    transparent: true,
+    depthWrite: false
+  });
+  return dpukm  
+}
+
+const pukMStandard = genPuk('./img/puk_256.png'); // PNG: transparent // Standard Gray PUK
+const pukMSpacebee = genPuk('./img/puk_sb_256.png'); // PNG: transparent // Standard Gray PUK
+const pukMAstrocast = genPuk('./img/puk_astrocast_256.png'); // PNG: transparent // Standard Gray PUK
+const pukMStarlink = genPuk('./img/puk_starlink_256.png'); // PNG: transparent // Standard Gray PUK
+
+function selpuk(name){
+  if(name.toLowerCase().startsWith("spacebee")) return pukMSpacebee
+  if(name.toLowerCase().startsWith("astrocast")) return pukMAstrocast
+  if(name.toLowerCase().startsWith("starlink")) return pukMStarlink
+
+  return pukMStandard 
+}
 const lineMaterialTrack = new THREE.LineBasicMaterial({
   color: 'red',
   transparent: true,
-  opacity: 0.4
+  opacity: 0.8
 });
 
 // Build Trajektory for rec anz steps per sec
@@ -169,7 +183,7 @@ function trajektorie(t0, sr, anz, msec) {
   return new THREE.BufferGeometry().setFromPoints(points)
 }
 
-const TRACKRES = 200 // 200 sec/Track-Einheit
+const TRACKRES = 100 // 100 sec/Track-Einheit
 // Fill/Remove Tracks
 function populateTracks() {
   groupTrajectories.clear();
@@ -181,11 +195,13 @@ function populateTracks() {
   })
 
   if (appopt.propsec > 0) {
+    const nd = new Date(tsZero)
+    guiTerminal("Prop. Date: "+ nd.toUTCString());
     TLE.SelSatList.forEach((e) => {
-      const anzsteps = appopt.propsec / TRACKRES
+      var anzsteps = appopt.propsec / TRACKRES
       if (anzsteps >= 2) { // Min. fuer Linie
-console.log(anzsteps,TLE.SelSatList.length)
-        const tr = trajektorie(Date.now(), e.sr, anzsteps, TRACKRES * 1000)
+        if (TLE.SelSatList.length>200 && anzsteps>3) anzsteps=3
+        const tr = trajektorie(tsZero, e.sr, anzsteps, TRACKRES * 1000)
         if (tr !== undefined) {
           const hobj = new THREE.Object3D();
           const hline = new THREE.Line(tr, lineMaterialTrack)
@@ -208,7 +224,7 @@ function populateSatellites() {
     var nSat = ses.sat3Obj
     var nSprite = ses.sat3ObjSprite
     if (nSat == null) {
-      nSprite = new THREE.Sprite(pukMaterial);
+      nSprite = new THREE.Sprite(selpuk(ses.name));
       nSprite.position.set(0, 0, 1) // Direct on Earth
       nSat = new THREE.Object3D() // Center Obj
       nSat.add(nSprite)
@@ -285,7 +301,7 @@ try {
   genEarth() // R=1
 
   // Search action after load
-  const h = appoptions.add(appopt, 'puksize', 0.001, 0.05).name("Sat.Size")
+  const h = appoptions.add(appopt, 'puksize', 0.001, 0.1).name("Sat.Size")
   h.onChange(
     () => {
       populateSatellites()
