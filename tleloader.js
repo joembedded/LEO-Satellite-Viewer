@@ -44,15 +44,18 @@ const ixpdotp = MinutesPerDay / (2.0 * 3.141592654)
 
 /* Load List of all currently active LEO Satellites */
 export async function loadTLEList() {
-    // Original Source: https: celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
-    const res = await fetchData('./data/tledata.txt') // Load global TLE List
+    // Original Source: https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
+    // Periodic Copy: https://joembedded.de/x3/leoview/data/tledata.txt
+    //const dataurl = './data/tledata.txt'
+    const dataurl = 'https://joembedded.de/x3/leoview/data/tledata.php'
+    const res = await fetchData(dataurl) // Load global TLE List
     if (res.startsWith('ERROR: ')) {
         alert("\u274C ERROR:\nNo TLE Data found.\nReason: '" + res.substring(7) +
             "'")
     } else {
         SatList = []
         try {
-            var tmplist = res.split("\n")
+            var tmplist = res.replace(/\r/g,'').split("\n")
             for (let i = 0; i < tmplist.length; i += 3) {
                 let hname = tmplist[i].trim()
                 let hl0 = tmplist[i + 1].trim()
