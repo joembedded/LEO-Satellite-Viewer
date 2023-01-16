@@ -79,12 +79,17 @@ export async function loadTLEList() {
     }
 }
 
+// Accepts aLiszt of comma separated operators e.g. spacbee,astrocast,
 export function buildSelectedSatList(selmask) {
     const sellow = selmask.toLowerCase()
     SelSatList = []
-    SelSatList = SatList.filter((e) => {
-        e.sr.error = 0;
-        return e.name.toLowerCase().startsWith(sellow)
+
+    const selmarr = selmask.replace(/,*$/, '').split(',')
+    SatList.forEach((e) => {
+        const snlo = e.name.toLowerCase();
+        if(selmarr.find(e => snlo.startsWith(e)) !== undefined){
+            SelSatList.push(e)            
+        }
     })
     return SelSatList.length
 }
