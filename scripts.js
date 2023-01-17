@@ -371,7 +371,7 @@ try {
 
   // Analyse URL Parameters
   const urlpar = g_init()
-  console.log(urlpar)
+  //console.log(urlpar)
   
   if(urlpar.min !== undefined){ // OPTION min  - Minimize GUI
     gui.close(); // Open Closed
