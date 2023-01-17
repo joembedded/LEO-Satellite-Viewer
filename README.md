@@ -9,7 +9,7 @@ For a better understanding I wrote this little App. It is based on freely availa
 
 Hints: 
 - The 'Searchmask' also allows comma-separated list, like 'iss, tianping'
-- 'Prop.(sec)' predicts the orbit for a number of seconds (typically the orbit of a LEO Satellite is arround 1.5h (ca. 5400 sec))
+- 'Prop.(sec)' predicts the orbits for a number of seconds (typically the orbit of a LEO Satellite is arround 1.5h (ca. 5400 sec))
 
 
 ## Some Satellite IoT operators:
@@ -37,7 +37,7 @@ _Iridium (with coverage circles)_
 
 Link: [TerraTransfer GmbH, Bochum, Germany](https://www.terratransfer.org)
 
-### *Kudos* to:
+### **Kudos** to:
 - The 'Satellite.js' library: https://github.com/shashwatak/satellite-js
 - 'Globe.gl' for many ideas: https://github.com/vasturiano/globe.gl
 - 'Satellite Tracker': https://github.com/dsuarezv/satellite-tracker
