@@ -30,6 +30,11 @@ _Starlink just as additinal info (with ca. 3000 Satellites) for Broadband Intern
 
 _Iridium (with coverage circles)_
 
+# Links
+A project using the SWARM IoT Satellites:
+
+[Project Spacebee](https://github.com/joembedded/Spacebee)
+
 # Sponsors
 ## This project was sponsered and supported by:
 

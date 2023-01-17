@@ -100,7 +100,7 @@ function selectSats() {
 //--- App Options ---
 var cdate_ts = Date.now() // Current timestamp starts with NOW
 const appopt = {
-  searchmask: 'spacebee,astrocast',
+  searchmask: 'astrocast,spacebee',
   puksize: 0.03, // rel to Earth (0.01: 60km!)
   earthcircle: 600,  // 600km->1 Rad
   expfspeed: 2,  
@@ -340,8 +340,8 @@ function initMouse() {
 try {
   initJot3(false, false); // Init Jo 3D Framwwork orbitcontrol, camera, scene
 
-  gui.close(); // Open Closed
-  guiTerminalShow(false);
+  //gui.close(); // Open Closed
+  //guiTerminalShow(false);
 
   const appoptions = gui.addFolder("App Options");
   appoptions.open();
