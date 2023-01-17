@@ -102,9 +102,9 @@ var cdate_ts = Date.now() // Current timestamp starts with NOW
 const appopt = {
   searchmask: 'astrocast,spacebee',
   puksize: 0.03, // rel to Earth (0.01: 60km!)
-  earthcircle: 600,  // 600km->1 Rad
-  expfspeed: 2,  
-  fspeed: 10,   // implizit berechnet! (+/-10^expfspeed)
+  earthcircle: 900,  // 600km->1 Rad
+  expfspeed: 2,   // Exponentional Fspeed 
+  fspeed: 10,   // *implizit* berechnet! (+/-10^expfspeed)
   propsec: 0, // 5500: ca 1 Cycle Propagation lenth in sec (if >0)
   showbackimg: true,
 }
@@ -336,19 +336,80 @@ function initMouse() {
   });
 }
 
-//==================== MAIN ====================
+function setFspeed(){
+  if(appopt.expfspeed==0) appopt.fspeed= 0;
+  else if(appopt.expfspeed>0) appopt.fspeed= Math.pow(10,appopt.expfspeed-1);
+  else appopt.fspeed= -Math.pow(10,-appopt.expfspeed-1);
+}
+
+// Get Obj with URL Parameters e.g. http://localhost/wrk/leoview/?a=b return {a:'b'}
+function g_init() {
+  // Isolate URL Parameters
+  var qs = location.search.substring(1).split('&')
+  var urlpar = {}
+  for (var x = 0; x < qs.length; x++) {
+    var kv = qs[x].split('=')
+    if (kv[1] === undefined) kv[1] = ''
+    urlpar[kv[0]] = kv[1]
+  }
+  return urlpar
+}
+
+/*==================== MAIN ====================
+URL Options:
+min  - Minimize GUI
+sm=text,text.. - Searchmask e.g. ?sm=atrocast,iridium
+ec=0..3000 - Size of EarthCircle km
+ps=0..86400 - Propagation seconds
+sz=0.001 .. 0.1 - Sat.size
+sp=-4..4 - Speed
+nl - Do not display LINKs!
+*/
+
 try {
   initJot3(false, false); // Init Jo 3D Framwwork orbitcontrol, camera, scene
 
-  //gui.close(); // Open Closed
-  //guiTerminalShow(false);
+  // Analyse URL Parameters
+  const urlpar = g_init()
+  //console.log(urlpar)
+  
+  if(urlpar.min !== undefined){ // OPTION min  - Minimize GUI
+    gui.close(); // Open Closed
+    guiTerminalShow(false);
+  }
+  if(urlpar.sm !== undefined){  // OPTION sm - Searchmask e.g. ?sm=atrocast,iridium
+    appopt.searchmask = decodeURI(urlpar.sm)
+  }
+  if(urlpar.ec !== undefined){  // OPTION ec - Size of EarthCircle
+    const h = parseInt(urlpar.ec);
+    if (!isNaN(h) && h>=0 && h<=3000)  appopt.earthcircle = h
+  }
+  if(urlpar.ps !== undefined){ // OPTION ps - Propagation seconds
+    const h = parseInt(urlpar.ps);
+    if (!isNaN(h) && h>=0 && h<=86400)  appopt.propsec = h
+  }
+  if(urlpar.sz !== undefined){ // OPTION sz - Sat.size
+    const h = parseFloat(urlpar.sz);
+    if (!isNaN(h) && h>=0.001 && h<=0.1)  appopt.puksize = h
+  }
+  if(urlpar.sp !== undefined){ // OPTION sp - Speed
+    const h = parseInt(urlpar.sp);
+    if (!isNaN(h) && h>=-4 && h<=4) {
+      appopt.expfspeed = h
+      setFspeed()
+    }
+  }
+
 
   const appoptions = gui.addFolder("App Options");
   appoptions.open();
   appdgsearch = appoptions.add(appopt, 'searchmask').name("Searchmask")
 
   guiTerminal("\u2b50 LEO View - Satellite Tracker \u2b50")
-  guiTerminal("JoEmbedded.de / V0.2")
+  if(urlpar.nl === undefined){ // OPTION nl - Do not display LINKs!
+    document.getElementById('id_ainfo').innerHTML='<a href="https://github.com/joembedded/LEO-Satellite-Viewer" target="_blank"> [ Home ] </a>'
+    guiTerminal("JoEmbedded.de / V0.3")
+  }
   guiTerminal("")
 
 
@@ -380,12 +441,8 @@ try {
   }, 'now0').name("<button style='background: #555; color: #DDD;'> Use current Time </button>");
 
 
-  appoptions.add(appopt, 'expfspeed', -4, 4, 1).name("Speed Factor").onChange(()=>{
-    if(appopt.expfspeed==0) appopt.fspeed= 0;
-    else if(appopt.expfspeed>0) appopt.fspeed= Math.pow(10,appopt.expfspeed-1);
-    else appopt.fspeed= -Math.pow(10,-appopt.expfspeed-1);
-  })
-
+  appoptions.add(appopt, 'expfspeed', -4, 4, 1).name("Speed Factor").onChange(setFspeed)
+  
   appdgprop = appoptions.add(appopt, 'propsec', 0, 86400, 400).name("Prop.(sec)")
 
   appoptions.add(appopt, 'showbackimg').name("Background Image").onChange(() => scene.background = (appopt.showbackimg) ? backgroundcube : undefined)
