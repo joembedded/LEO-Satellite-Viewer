@@ -7,7 +7,7 @@
 
 import * as SAT from "./modules/satellite.min.js" // install via npm install satellite.js
 import {
-    StaticCopyUsage
+    StaticCopyUsage, TrianglesDrawMode
 } from "./modules/three.module.min.js"
 
 
@@ -27,6 +27,20 @@ function Terminal(txt, flush = true) {
 }
 
 // --- Functions ---
+// Split URL Parameters
+export function splitUrl(){
+    let qs = location.search.substring(1).split('&')
+    let urlpar = {}
+    for (let x = 0; x < qs.length; x++) {
+    let kv = qs[x].split('=')
+    if (kv[1] === undefined) kv[1] = ''
+        urlpar[kv[0]] = kv[1]
+    }
+    return urlpar;
+}
+
+
+
 async function fetchData(file) { // ATTENTION: Fetch only via HTTP
     try {
         let response = await fetch(file)
@@ -45,9 +59,14 @@ const ixpdotp = MinutesPerDay / (2.0 * 3.141592654)
 /* Load List of all currently active LEO Satellites */
 export async function loadTLEList() {
     // Original Source: https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
-    // Periodic Copy: https://joembedded.de/x3/leoview/data/tledata.txt
-    //const dataurl = './data/tledata.txt'
-    const dataurl = 'https://joembedded.de/x3/leoview/data/tledata.php'
+    // Periodic (cached) Copy: https://joembedded.de/x3/leoview/data/tledata.php
+    let dataurl
+    if(location.hostname == 'localhost'){
+        dataurl = './data/tledata.txt'
+    }else{
+        dataurl = 'https://joembedded.de/x3/leoview/data/tledata.php'
+    }
+
     const res = await fetchData(dataurl) // Load global TLE List
     if (res.startsWith('ERROR: ')) {
         alert("\u274C ERROR:\nNo TLE Data found.\nReason: '" + res.substring(7) +
@@ -87,7 +106,7 @@ export function buildSelectedSatList(selmask) {
     const sellow = selmask.toLowerCase()
     SelSatList = []
 
-    const selmarr = selmask.replace(/,*$/, '').split(',')
+    const selmarr = sellow.replace(/,*$/, '').split(',').map((e)=>e.trim()) // Remove last comma ans WSs
     SatList.forEach((e) => {
         const snlo = e.name.toLowerCase();
         if(selmarr.find(e => snlo.startsWith(e)) !== undefined){

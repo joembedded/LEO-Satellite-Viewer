@@ -88,6 +88,7 @@ export function guiTerminal(txt) {  // Return Anz available
   return MAXTERM - terminalContent.length 
 }
 export function guiTerminalShow(f) {
+  termOpt.showTerminal = f
   if (termDom === undefined) initTerminal()
   guix.style.display = f ? 'block' : 'none'
 }

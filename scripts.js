@@ -100,12 +100,12 @@ function selectSats() {
 //--- App Options ---
 var cdate_ts = Date.now() // Current timestamp starts with NOW
 const appopt = {
-  searchmask: 'spacebee',
-  puksize: 0.02, // rel to Earth (0.01: 60km!)
-  earthcircle: 0.1,  // 0.1: 600km Rad
+  searchmask: 'spacebee,astrocast',
+  puksize: 0.03, // rel to Earth (0.01: 60km!)
+  earthcircle: 600,  // 600km->1 Rad
   expfspeed: 2,  
   fspeed: 10,   // implizit berechnet! (+/-10^expfspeed)
-  propsec: 600, // 5500: ca 1 Cycle Propagation lenth in sec (if >0)
+  propsec: 0, // 5500: ca 1 Cycle Propagation lenth in sec (if >0)
   showbackimg: true,
 }
 var appdgsearch;
@@ -148,28 +148,42 @@ const pukMStandard = genPuk('./img/puk_256.png'); // PNG: transparent // Standar
 const pukMSpacebee = genPuk('./img/puk_sb_256.png'); // PNG: transparent // Standard Gray PUK
 const pukMAstrocast = genPuk('./img/puk_astrocast_256.png'); // PNG: transparent // Standard Gray PUK
 const pukMStarlink = genPuk('./img/puk_starlink_256.png'); // PNG: transparent // Standard Gray PUK
+const pukFlock = genPuk('./img/puk_flock_256.png'); 
+const pukFossa = genPuk('./img/puk_fossa_256.png'); 
+const pukGlobalstar = genPuk('./img/puk_globalstar_256.png'); 
+const pukIridium = genPuk('./img/puk_iridium_256.png'); 
+const pukIss = genPuk('./img/puk_iss_256.png'); 
+const pukOneweb = genPuk('./img/puk_oneweb_256.png'); 
+const pukOrbcomm = genPuk('./img/puk_orbcomm_256.png'); 
 
 function selpuk(name){
   if(name.toLowerCase().startsWith("spacebee")) return pukMSpacebee
   if(name.toLowerCase().startsWith("astrocast")) return pukMAstrocast
   if(name.toLowerCase().startsWith("starlink")) return pukMStarlink
+  if(name.toLowerCase().startsWith("flock")) return pukFlock
+  if(name.toLowerCase().startsWith("fossa")) return pukFossa
+  if(name.toLowerCase().startsWith("globalstar")) return pukGlobalstar
+  if(name.toLowerCase().startsWith("iridium")) return pukIridium
+  if(name.toLowerCase().startsWith("iss")) return pukIss
+  if(name.toLowerCase().startsWith("oneweb")) return pukOneweb
+  if(name.toLowerCase().startsWith("orbcomm")) return pukOrbcomm
 
   return pukMStandard 
 }
 const lineMaterialTrack = new THREE.LineBasicMaterial({
   color: 'red',
   transparent: true,
-  opacity: 0.7
+  opacity: 0.6
 });
 const lineMaterialRadial = new THREE.LineBasicMaterial({
   color: 'yellow',
   transparent: true,
-  opacity: 0.8
+  opacity: 0.7
 });
 const lineMaterialCircle = new THREE.LineBasicMaterial({
   color: 'orange',
   transparent: true,
-  opacity: 0.8
+  opacity: 0.7
 });
 
 // Build Trajektory for rec anz steps per sec
@@ -179,7 +193,7 @@ function trajektorie(t0, sr, anz, msec) {
     const tdate = new Date(t0 + i * msec)
     const hpos = TLE.calcSrPositionEci(sr, tdate)
     if (hpos == undefined) return
-    var rad = 1 + (hpos.alt / EARTH_RADIUS_KM)
+    var rad = 0.995 + (hpos.alt / EARTH_RADIUS_KM)
     const tr = new THREE.Vector3(0, 0, rad).applyEuler(new THREE.Euler(-hpos.lat, hpos.lng, 0, 'YXZ'))
     points.push(tr);
   }
@@ -243,7 +257,11 @@ function populateSatellites() {
   // Remove visible Elements form rendering (but not disposed)
   groupSatellites.clear();
 
-  for (let i = 0; i < TLE.SelSatList.length; i++) {
+const er = appopt.earthcircle/EARTH_RADIUS_KM
+const wi = Math.atan(er)
+const err= Math.sqrt(1 - er * er)
+
+for (let i = 0; i < TLE.SelSatList.length; i++) {
     const ses = TLE.SelSatList[i];
     var nSat = ses.sat3Obj
     var nSprite = ses.sat3ObjSprite
@@ -257,7 +275,7 @@ function populateSatellites() {
       //const nl = lineRadHL(1.2,1.1)
       //nSat.add(nl)
 
-      const cl = circleObj(1,1) // Height via position.z or here
+      const cl = circleObj(1.003,1.003) // Height via position.z or here
       //cl.scale.x = 0.1; cl.scale.y = 0.05; cl.position.z = 1.05
       nSat.add(cl)
 
@@ -265,8 +283,8 @@ function populateSatellites() {
       ses.sat3ObjSprite = nSprite
     }
     const h = nSat.children[1]
-      h.scale.set(appopt.earthcircle,appopt.earthcircle)
-    h.visible = appopt.earthcircle>0
+    h.scale.set(er,er,err)
+    h.visible = er>0
     nSprite.name = "s" + i // Name is Index in SelList
     nSprite.scale.set(appopt.puksize, appopt.puksize)
     groupSatellites.add(nSat);
@@ -322,6 +340,9 @@ function initMouse() {
 try {
   initJot3(false, false); // Init Jo 3D Framwwork orbitcontrol, camera, scene
 
+  gui.close(); // Open Closed
+  guiTerminalShow(false);
+
   const appoptions = gui.addFolder("App Options");
   appoptions.open();
   appdgsearch = appoptions.add(appopt, 'searchmask').name("Searchmask")
@@ -329,6 +350,7 @@ try {
   guiTerminal("\u2b50 LEO View - Satellite Tracker \u2b50")
   guiTerminal("JoEmbedded.de / V0.2")
   guiTerminal("")
+
 
   // Background - 6 ident. Sides Box
   const backgroundcube = new THREE.CubeTextureLoader().load(Array(6).fill(backgroundImage));
@@ -341,14 +363,21 @@ try {
     () => {
       populateSatellites()
     })
-  appoptions.add(appopt, 'earthcircle', 0, 0.2).name("EarthCircle").onChange(
+  appoptions.add(appopt, 'earthcircle', 0, 3000).name("EarthCircle(km)").onChange(
       () => {
         populateSatellites()
       })
   
    appoptions.add(new function () {
     this.cam0 = () => cameraHome()
-  }, 'cam0').name("[ Camera Home ]");
+  }, 'cam0').name("<button style='background: #555; color: #DDD;'> Camera Home </button>");
+
+  appoptions.add(new function () {
+    this.now0 = () => {
+      cdate_ts = Date.now() // Current timestamp starts with NOW
+      last_ts = cdate_ts;
+    }
+  }, 'now0').name("<button style='background: #555; color: #DDD;'> Use current Time </button>");
 
 
   appoptions.add(appopt, 'expfspeed', -4, 4, 1).name("Speed Factor").onChange(()=>{
