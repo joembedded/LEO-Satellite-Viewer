@@ -37,7 +37,7 @@ _Iridium (with coverage circles)_
 
 Link: [TerraTransfer GmbH, Bochum, Germany](https://www.terratransfer.org)
 
-### **Kudos** to:
+### *Kudos* to:
 - The 'Satellite.js' library: https://github.com/shashwatak/satellite-js
 - 'Globe.gl' for many ideas: https://github.com/vasturiano/globe.gl
 - 'Satellite Tracker': https://github.com/dsuarezv/satellite-tracker
