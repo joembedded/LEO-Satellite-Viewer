@@ -23,6 +23,7 @@ import {
 
 import * as TLE from './tleloader.js'
 
+
 //--- Images ---
 const backgroundImage = './img/night-sky.jpg';
 const globeImg = './img/earth-jo.jpg'; // Earth
@@ -370,9 +371,12 @@ try {
   initJot3(false, false); // Init Jo 3D Framwwork orbitcontrol, camera, scene
 
   // Analyse URL Parameters
-  const urlpar = g_init()
-  //console.log(urlpar)
-  
+  let urlpar = g_init()
+ 
+  //urlpar.nl = 0; //noLinktoHome
+  //urlpar.min = 0; //StartMinimized
+
+  // console.log(urlpar)
   if(urlpar.min !== undefined){ // OPTION min  - Minimize GUI
     gui.close(); // Open Closed
     guiTerminalShow(false);
