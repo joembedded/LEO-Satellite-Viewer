@@ -373,7 +373,7 @@ try {
   // Analyse URL Parameters
   let urlpar = g_init()
 
-  urlpar.nl = 0; //noLinktoHome, noLink to Joembedded
+  //urlpar.nl = 0; //noLinktoHome, noLink to Joembedded
   //urlpar.min = 0; //StartMinimized
 
   // console.log(urlpar)
