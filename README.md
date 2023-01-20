@@ -1,6 +1,6 @@
 # LEO View - View LEO Satellites
 
-JoEmbedded V0.3
+JoEmbedded V0.4
 
 LIVE: https://joembedded.github.io/LEO-Satellite-Viewer
 
@@ -17,11 +17,11 @@ Hints:
 
 ![The Spacebees from Swarm](./docu/spacebee.jpg)
 
-_The Swarm network consists of ca. 150 'Spacebees', based on 'LoRa'_
+_The Swarm network consists of ca. 150 'Spacebees', IoT based on 'LoRa'_
 
 ![Astrocast](./docu/astrocast.jpg)
 
-_Astrocast (ca. 20 Satellites) has a very smart own technology with extrem low power_
+_Astrocast (ca. 20 Satellites) has a very smart own IoT technology with extrem low power_
 
 ![Starlink](./docu/starlink.jpg)
 
@@ -29,7 +29,7 @@ _Starlink just as additinal info (with ca. 3000 Satellites) for Broadband Intern
 
 ![Iridium](./docu/iridium.jpg)
 
-_Iridium (with coverage circles)_
+_The Iridium network (with coverage circles), IoT and Internet_
 
 # Links
 A project using the SWARM IoT Satellites: [Project Spacebee](https://github.com/joembedded/Spacebee)
@@ -41,10 +41,12 @@ A project using the SWARM IoT Satellites: [Project Spacebee](https://github.com/
 
 Link: [TerraTransfer GmbH, Bochum, Germany](https://www.terratransfer.org)
 
-### *Kudos* to:
+# *Kudos* to:
+- The 'Three.js' library: https://threejs.org
 - The 'Satellite.js' library: https://github.com/shashwatak/satellite-js
-- 'Globe.gl' for many ideas: https://github.com/vasturiano/globe.gl
-- 'Satellite Tracker': https://github.com/dsuarezv/satellite-tracker
 - CelesTrack for the NORAD data: https://celestrak.org
+- Wael Yasmina for his excellent Tutorials: https://www.youtube.com/c/WaelYasmina
+- 'Globe.gl' for inspiration: https://github.com/vasturiano/globe.gl
+- 'Satellite Tracker' for inspiration: https://github.com/dsuarezv/satellite-tracker
 
 ***

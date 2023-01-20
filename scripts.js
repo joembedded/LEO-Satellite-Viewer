@@ -357,7 +357,7 @@ function g_init() {
 }
 
 /*==================== MAIN ====================
-URL Options:
+-- URL Options: (only working if deployed on own server, not on github)
 min  - Minimize GUI
 sm=text,text.. - Searchmask e.g. ?sm=atrocast,iridium
 ec=0..3000 - Size of EarthCircle km
@@ -373,8 +373,8 @@ try {
   // Analyse URL Parameters
   let urlpar = g_init()
 
-  urlpar.nl = 0; //noLinktoHome
-  urlpar.min = 0; //StartMinimized
+  urlpar.nl = 0; //noLinktoHome, noLink to Joembedded
+  //urlpar.min = 0; //StartMinimized
 
   // console.log(urlpar)
   if (urlpar.min !== undefined) { // OPTION min  - Minimize GUI
