@@ -412,7 +412,7 @@ try {
   guiTerminal("\u2b50 LEO View - LEO Satellite Tracker \u2b50")
   if (urlpar.nl === undefined) { // OPTION nl - Do not display LINKs!
     document.getElementById('id_ainfo').innerHTML = '<a href="https://github.com/joembedded/LEO-Satellite-Viewer" target="_blank"> [ Home ] </a>'
-    guiTerminal("JoEmbedded.de / V0.3")
+    guiTerminal("JoEmbedded.de / V0.4")
   }
   guiTerminal("")
 
@@ -447,7 +447,7 @@ try {
 
   appoptions.add(appopt, 'expfspeed', -4, 4, 1).name("Speed Factor").onChange(setFspeed)
 
-  appdgprop = appoptions.add(appopt, 'propsec', 0, 86400, 400).name("Prop.(sec)")
+  appdgprop = appoptions.add(appopt, 'propsec', 0, 86400, 100).name("Prop.(sec)")
 
   appoptions.add(appopt, 'showbackimg').name("Background Image").onChange(() => scene.background = (appopt.showbackimg) ? backgroundcube : undefined)
 

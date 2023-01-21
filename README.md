@@ -18,6 +18,7 @@ Hints:
 ![The Spacebees from Swarm](./docu/spacebee.jpg)
 
 _The Swarm network consists of ca. 150 'Spacebees', IoT based on 'LoRa'_
+(Project Spacebee: https://github.com/joembedded/Spacebee )
 
 ![Astrocast](./docu/astrocast.jpg)
 
@@ -29,7 +30,7 @@ _Starlink just as additinal info (with ca. 3000 Satellites) for Broadband Intern
 
 ![Iridium](./docu/iridium.jpg)
 
-_The Iridium network (with coverage circles), IoT and Internet_
+_The Iridium network (permanent global coverage), for IoT and Internet_
 
 # Links
 A project using the SWARM IoT Satellites: [Project Spacebee](https://github.com/joembedded/Spacebee)
