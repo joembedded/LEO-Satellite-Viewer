@@ -18,7 +18,7 @@ Hints:
 ![The Spacebees from Swarm](./docu/spacebee.jpg)
 
 _The Swarm network consists of ca. 150 'Spacebees', IoT based on 'LoRa'_
-(Project Spacebee: https://github.com/joembedded/Spacebee )
+<br>(Project Spacebee: https://github.com/joembedded/Spacebee )
 
 ![Astrocast](./docu/astrocast.jpg)
 
