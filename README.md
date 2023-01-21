@@ -26,7 +26,7 @@ _Astrocast (ca. 20 Satellites) has a very smart own IoT technology with extrem l
 
 ![Starlink](./docu/starlink.jpg)
 
-_Starlink just as additinal info (with ca. 3000 Satellites) for Broadband Internet)_
+_Starlink just as additinal info (with ca. 3000 Satellites for Broadband Internet)_
 
 ![Iridium](./docu/iridium.jpg)
 
