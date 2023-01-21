@@ -8,7 +8,7 @@ Currently there are almost 7000 LEO Satellites (LEO stands 'Low-Earth-Orbit').
 For a better understanding I wrote this little App. It is based on freely available and regularly updated real-time data (NORAD). 
 
 Hints: 
-- The 'Searchmask' also allows comma-separated list, like 'iss, tianping'
+- The 'Searchmask' also allows comma-separated list, like ```iss, tianping```
 - 'Prop.(sec)' predicts the orbits for a number of seconds (typically the orbit of a LEO Satellite is arround 1.5h (ca. 5400 sec))
 - The App accepts some URL parameters for customised display (see 'scripts.js' -> 'main')
 
