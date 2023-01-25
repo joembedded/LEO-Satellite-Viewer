@@ -173,23 +173,6 @@ export function calcPositions(date = new Date()) {
     }
 }
 
-/*
-//--------- MAIN TEST ----------
-async function tleSetup() {
-    Terminal("=== TLELOADER.JS - App Ready ===")
-    Terminal("Loading TLE Data...")
-    await loadTLEList()
-    Terminal("OK, Analyze...")
-    //SatList.forEach((e)=>Terminal(e.name,false)) // no FLush
-    Terminal("SatList Data OK " + SatList.length)
-    var res = buildSelectedSatList("astrocast");
-    //SelSatList.forEach((e)=>Terminal(e.name,false)) // no FLush
-    Terminal("SelSatList Data OK " + res)
-    calcPositions();    // NOW
-
-}
-window.addEventListener("load", tleSetup)
-*/
 
 
 
