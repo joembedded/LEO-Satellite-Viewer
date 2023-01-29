@@ -166,6 +166,7 @@ function selpuk(name) {
   if (name.toLowerCase().startsWith("globalstar")) return pukGlobalstar
   if (name.toLowerCase().startsWith("iridium")) return pukIridium
   if (name.toLowerCase().startsWith("iss")) return pukIss
+  if (name.toLowerCase().startsWith("css")) return pukIss
   if (name.toLowerCase().startsWith("oneweb")) return pukOneweb
   if (name.toLowerCase().startsWith("orbcomm")) return pukOrbcomm
 
@@ -177,9 +178,9 @@ const lineMaterialTrack = new THREE.LineBasicMaterial({
   opacity: 0.6
 });
 const lineMaterialRadial = new THREE.LineBasicMaterial({
-  color: 'yellow',
+  color: 'fuchsia',
   transparent: true,
-  opacity: 0.7
+  opacity: 1
 });
 const lineMaterialCircle = new THREE.LineBasicMaterial({
   color: 'orange',
@@ -204,20 +205,20 @@ function trajektorie(t0, sr, anz, msec) {
 // GroundDirectedLine
 function lineRadHL(radh, radl) {
   let points = [];
-  points.push(new THREE.Vector3(0, 0, radl));
-  points.push(new THREE.Vector3(0, 0, radh));
+  points.push(new THREE.Vector3(0,0,radl));
+  points.push(new THREE.Vector3(0,0,radh));
   return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), lineMaterialRadial)
 }
 
 const CANZSEG = 30 // Anzahl Segments Standardkreis
-function circleObj(rad, height) {
+function circleObj(rad, height, mat = lineMaterialCircle) {
   let rstep = Math.PI * 2 / CANZSEG
   let points = [];
   for (let i = 0; i < Math.PI * 2; i += rstep) {
     points.push(new THREE.Vector3(rad * Math.sin(i), rad * Math.cos(i), height));
   }
   points.push(points[0])
-  return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), lineMaterialCircle)
+  return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), mat)
 }
 
 
@@ -272,7 +273,7 @@ function populateSatellites() {
       nSat = new THREE.Object3D() // Center Obj
       nSat.add(nSprite) // [0]!
 
-      /* GND-Line */
+      /* A GND-directing-Line */
       //const nl = lineRadHL(1.2,1.1)
       //nSat.add(nl)
 
@@ -297,8 +298,12 @@ function populateSatellites() {
 const mousePosition = new THREE.Vector2();
 const rayCaster = new THREE.Raycaster();
 
+const groundObj = new circleObj(0.05,1.003,lineMaterialRadial); // new lineRadHL(1,1.1);
+var gndlineadded = false;
+
+
 function initMouse() {
-  window.addEventListener('click', (e) => {
+  window.addEventListener('mousedown', (e) => {
     mousePosition.x = (e.clientX / window.innerWidth) * 2 - 1;
     mousePosition.y = -(e.clientY / window.innerHeight) * 2 + 1;
     //console.log("Click(rX,rY): ", mousePosition.x.toFixed(5), mousePosition.y.toFixed(5))
@@ -314,6 +319,27 @@ function initMouse() {
           //console.log("HIT(x,y,z):", e.point.x.toFixed(3), e.point.y.toFixed(3), e.point.z.toFixed(3))
           var wgs = cartesian2Polar(e.point);
           guiTerminal("\u25cf Earth: Lat, Lng: " + wgs.lat.toFixed(2) + ", " + wgs.lng.toFixed(2)) // WGS84
+          groundObj.setRotationFromEuler(new THREE.Euler(-wgs.lat/180*Math.PI, wgs.lng/180*Math.PI, 0, 'YXZ'))
+          if(!gndlineadded){
+            scene.add(groundObj)
+            gndlineadded=true
+          }
+          groundObj.visible=true
+          groundObj.scale.x = 0.1;
+          groundObj.scale.y = 0.1;
+          lineMaterialRadial.opacity = 1
+          function fadeout(){
+            const h = lineMaterialRadial.opacity - 0.1;
+            if(h<=0) groundObj.visible=false
+            else {
+              lineMaterialRadial.opacity = h;
+              groundObj.scale.x = 1.1-h;
+              groundObj.scale.y = 1.1-h;
+                  
+              setTimeout(fadeout,50)
+            }
+          }
+          setTimeout(fadeout,500)
           return false // Bye!
         }
         if (name.startsWith('s')) {
@@ -321,13 +347,13 @@ function initMouse() {
           const sat = TLE.SelSatList[idx]
           guiTerminal("\u25cf Satellite '" + sat.name + "':");
           if (sat.satPos == null) {
-            guiTerminal("- Error: 'satrec.error:" + sat.sr.error + "'");
+            guiTerminal("- Error: 'satrec.error:" + sat.sr.error + "'")
           } else {
             guiTerminal("- Lat, Lng: " + satellite.degreesLong(sat.satPos.lat).toFixed(3) + ", " +
               satellite.degreesLong(sat.satPos.lng).toFixed(3))
             guiTerminal("- Altitude: " + sat.satPos.alt.toFixed(0) + " km");
             if (sat.satPos.speed) // >0 (only if enabled)
-              guiTerminal("- Speed: " + sat.satPos.speed.toFixed(3) + "km/sec");
+              guiTerminal("- Speed: " + sat.satPos.speed.toFixed(3) + "km/sec")
           }
           return false // Bye!
         }
@@ -412,7 +438,7 @@ try {
   guiTerminal("\u2b50 LEO View - LEO Satellite Tracker \u2b50")
   if (urlpar.nl === undefined) { // OPTION nl - Do not display LINKs!
     document.getElementById('id_ainfo').innerHTML = '<a href="https://github.com/joembedded/LEO-Satellite-Viewer" target="_blank"> [ Home ] </a>'
-    guiTerminal("JoEmbedded.de / V0.4")
+    guiTerminal("JoEmbedded.de / V0.5")
   }
   guiTerminal("")
 
