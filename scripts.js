@@ -320,7 +320,7 @@ function initMouse() {
           var wgs = cartesian2Polar(e.point);
           guiTerminal("\u25cf Earth: Lat, Lng: " + wgs.lat.toFixed(2) + ", " + wgs.lng.toFixed(2)) // WGS84
           groundObj.setRotationFromEuler(new THREE.Euler(-wgs.lat/180*Math.PI, wgs.lng/180*Math.PI, 0, 'YXZ'))
-          if(!gndlineadded){
+          if(!gndlineadded){  // Click-Circle Fuchsia
             scene.add(groundObj)
             gndlineadded=true
           }
@@ -329,14 +329,14 @@ function initMouse() {
           groundObj.scale.y = 0.1;
           lineMaterialRadial.opacity = 1
           function fadeout(){
-            const h = lineMaterialRadial.opacity - 0.1;
+            const h = lineMaterialRadial.opacity - 0.02;
             if(h<=0) groundObj.visible=false
             else {
               lineMaterialRadial.opacity = h;
               groundObj.scale.x = 1.1-h;
               groundObj.scale.y = 1.1-h;
                   
-              setTimeout(fadeout,50)
+              setTimeout(fadeout,10)
             }
           }
           setTimeout(fadeout,500)
