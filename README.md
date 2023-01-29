@@ -47,8 +47,8 @@ Link: [TerraTransfer GmbH, Bochum, Germany](https://www.terratransfer.org)
 - The 'Satellite.js' library: https://github.com/shashwatak/satellite-js
 - CelesTrack for the NORAD data: https://celestrak.org
 - Wael Yasmina for his excellent Tutorials: https://www.youtube.com/c/WaelYasmina
+- 'Gunter's Space Page' for technical data: https://space.skyrocket.de
 - 'Satellite Tracker' for inspiration: https://github.com/dsuarezv/satellite-tracker
 - 'Globe.gl' for inspiration: https://github.com/vasturiano/globe.gl
-- 'Gunter's Space Page' for technical data: https://space.skyrocket.de
 
 ***
